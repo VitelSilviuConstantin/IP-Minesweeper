@@ -5,7 +5,15 @@ struct matrix
     char values[101][101];
 }mat;
 
+struct Queue
+{
+   int row;
+   int column;
+};
+bool flagged[101][101];
 bool printed[101][101];
 
 int dx[] = {-1, -1, -1, 0, 1, 1, 1, 0};
 int dy[] = {-1, 0, 1, 1, 1, 0, -1, -1};
+
+char inputMove[4];
