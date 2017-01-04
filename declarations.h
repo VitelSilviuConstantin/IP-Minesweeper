@@ -16,4 +16,5 @@ bool printed[101][101];
 int dx[] = {-1, -1, -1, 0, 1, 1, 1, 0};
 int dy[] = {-1, 0, 1, 1, 1, 0, -1, -1};
 
-char inputMove[4];
+int bombs;
+
