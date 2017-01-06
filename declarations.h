@@ -17,4 +17,6 @@ int dx[] = {-1, -1, -1, 0, 1, 1, 1, 0};
 int dy[] = {-1, 0, 1, 1, 1, 0, -1, -1};
 
 int bombs;
+bool bombFirst;
+
 

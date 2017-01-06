@@ -24,6 +24,47 @@ void generate_matrix(int numberOfBombs)
         if(mat.values[x][y] != -1)
         {
             mat.values[x][y] = -1;
+            cout<<x<<" "<<y<<'\n';
+            for(i = 0; i < 8; i++)
+            {
+                rx = x + dx[i];
+                ry = y + dy[i];
+                if(rx >= 1 && rx <= mat.n && ry >= 1 && ry <= mat.m && mat.values[rx][ry] != -1)
+                    mat.values[rx][ry]++;
+            }
+            counter--;
+        }
+    }
+}
+
+void bomb_pressed_first(int row, int column)
+{
+    int rowNeighbour, columnNeighbour;
+    int i, counter, x, y, rx, ry;
+
+    counter = 1;
+    mat.values[row][column] = 0;
+
+    for(i = 0; i < 8; i++)
+    {
+        rowNeighbour = row + dx[i];
+        columnNeighbour = column + dy[i];
+
+        if(mat.values[rowNeighbour][columnNeighbour] != -1)
+            mat.values[rowNeighbour][columnNeighbour]--;
+        else
+            mat.values[row][column]++;
+    }
+
+    while(counter)
+    {
+        x = rand() % mat.n + 1;
+        y = rand() % mat.m + 1;
+
+        if(mat.values[x][y] != -1)
+        {
+            mat.values[x][y] = -1;
+            cout<<x<<" "<<y;
             for(i = 0; i < 8; i++)
             {
                 rx = x + dx[i];
@@ -40,10 +81,46 @@ int input_move(int &blocksToWin)
 {
     Queue C[10201], v, z;
     int p, u, i;
-    char flag;
+    char flag, lineInput[10], columnInput[10];
     int line, column;
-    cout<<"Introduceti mutarea:";
-    cin>>line>>column;
+
+    for(i = 0; i < 10; i++)
+        lineInput[i] = columnInput[i] = NULL;
+
+    cout<<"Introduceti linie: ";
+    cin>>lineInput;
+
+    if(cin.get() !='\n')
+    {
+        while(cin.get()!='\n');
+        return 1;
+    }
+
+    for(i = 0; i < strlen(lineInput); i++)
+        if(lineInput[i] < '0' || lineInput[i] > '9')
+            return 1;
+
+    line = atoi(lineInput);
+    if(line < 1 || line > mat.n) return 1;
+
+
+    cout<<"Introduceti coloana: ";
+    cin>>columnInput;
+
+    if(cin.get() !='\n')
+    {
+        while(cin.get()!='\n');
+        return 1;
+    }
+
+    for(i = 0; i < strlen(columnInput); i++)
+        if(columnInput[i] < '0' || lineInput[i] > '9')
+            return 1;
+
+    column = atoi(columnInput);
+    if(column < 1 || column > mat.m)
+        return 1;
+
     if(flagged[line][column] == 1)
         cout<<"Stergeti flag? Y/N ";
     else
@@ -51,6 +128,9 @@ int input_move(int &blocksToWin)
     cin>>flag;
 
     flag = toupper(flag);
+
+    if(flag != 'Y' && flag != 'N')
+        return 1;
 
     if(flag == 'Y' && printed[line][column] == 0)
     {
@@ -62,48 +142,55 @@ int input_move(int &blocksToWin)
     }
     else
         if(printed[line][column] == 0 && flagged[line][column] == 0)
-            if(mat.values[line][column] == -1)
+            if(mat.values[line][column] == -1 && bombFirst == true)
                 return -1;
+            else
+            {
+                if(mat.values[line][column] == -1 && bombFirst == false)
+                {
+                    bomb_pressed_first(line, column);
+                    bombFirst = true;
+                }
+                if(mat.values[line][column] != 0)
+                {
+                    printed[line][column] = 1;
+                    blocksToWin--;
+                    return 1;
+                }
                 else
-                    if(mat.values[line][column] != 0)
+                {
+                    p = u = 1;
+                    C[p].row = line;
+                    C[p].column = column;
+
+                    while(p <= u)
                     {
-                        printed[line][column] = 1;
+                        v = C[p];
+                        p++;
+                        printed[v.row][v.column] = 1;
                         blocksToWin--;
-                        return 1;
-                    }
-                    else
-                    {
-                        p = u = 1;
-                        C[p].row = line;
-                        C[p].column = column;
-
-                        while(p <= u)
+                        for(i = 0; i < 8; i++)
                         {
-                            v = C[p];
-                            p++;
-                            printed[v.row][v.column] = 1;
-                            blocksToWin--;
-                            for(i = 0; i < 8; i++)
-                            {
-                                z.row = v.row + dx[i];
-                                z.column = v.column + dy[i];
+                            z.row = v.row + dx[i];
+                            z.column = v.column + dy[i];
 
-                                if(z.row >= 1 && z.row <= mat.n && z.column >= 1 && z.column <= mat.m && printed[z.row][z.column] == 0)
-                                    if(mat.values[z.row][z.column] != 0)
-                                    {
-                                        printed[z.row][z.column] = 1;
-                                        blocksToWin--;
-                                    }
-                                    else
-                                    {
-                                        C[++u].row = z.row;
-                                        C[u].column = z.column;
-                                        printed[z.row][z.column] = 1;
-                                    }
-                            }
+                            if(z.row >= 1 && z.row <= mat.n && z.column >= 1 && z.column <= mat.m && printed[z.row][z.column] == 0)
+                                if(mat.values[z.row][z.column] != 0)
+                                {
+                                    printed[z.row][z.column] = 1;
+                                    blocksToWin--;
+                                }
+                                else
+                                {
+                                    C[++u].row = z.row;
+                                    C[u].column = z.column;
+                                    printed[z.row][z.column] = 1;
+                                }
                         }
-                        return 1;
                     }
+                    return 1;
+                }
+            }
     return 1;
 }
 
@@ -113,8 +200,33 @@ void print_matrix()
     int i, j;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+    if(mat.m > 9)
+    {
+        if(mat.n > 9) cout<<"    ";
+        else cout<<"   ";
+        for(i = 1; i <= mat.m; i++)
+            if(i / 10 == 0) cout<<"  ";
+            else cout<<i / 10<<" ";
+        cout<<'\n';
+    }
+
+    if(mat.n > 9) cout<<"    ";
+        else cout<<"   ";
+    for(i = 1; i <= mat.m; i++)
+        cout<<i % 10<<" ";
+    cout<<'\n';
+
+    if(mat.n > 9) cout<<"    ";
+        else cout<<"   ";
+
+    for(i = 1; i<=mat.m; i++)
+        cout<<'-'<<" ";
+    cout<<'\n';
+
     for(i = 1; i <= mat.n; i++)
     {
+        if(mat.n > 9 && i < 10) cout<<" ";
+        cout<<i<<"| ";
         for(j = 1; j <= mat.m; j++)
             if(flagged[i][j])
                 cout<<'F'<<" ";
@@ -179,6 +291,7 @@ void run_game()
     int ok, result, blocksToWin;
     ok = 1;
     generate_matrix(bombs);
+    system("pause");
     blocksToWin = mat.n * mat.m - bombs;
     system("cls");
 
@@ -200,36 +313,127 @@ void run_game()
     }
 }
 
+void custom_game()
+{
+    int i;
+    char heightInput[10], lengthInput[10], bombsInput[10];
+
+    for(i = 0; i < 10; i++)
+        heightInput[i] = lengthInput[i] = bombsInput[i] = NULL;
+
+    system("cls");
+    cout<<"Introduceti inaltimea mapei: ";
+    cin>>heightInput;
+
+    if(cin.get() !='\n')
+    {
+        custom_game();
+        exit(0);
+    }
+
+    for(i = 0; i < strlen(heightInput); i++)
+        if(heightInput[i] < '0' || heightInput[i] > '9')
+        {
+            custom_game();
+            exit(0);
+        }
+
+    mat.n = atoi(heightInput);
+
+    if(mat.n < 9) mat.n = 9;
+    if(mat.n > 24) mat.n = 24;
+
+    cout<<"Introduceti latimea mapei: ";
+    cin>>lengthInput;
+
+    if(cin.get() !='\n')
+    {
+        custom_game();
+        exit(0);
+    }
+
+    for(i = 0; i < strlen(lengthInput); i++)
+        if(lengthInput[i] < '0' || lengthInput[i] > '9')
+        {
+            custom_game();
+            exit(0);
+        }
+
+    mat.m = atoi(lengthInput);
+
+    if(mat.m < 9) mat.m = 9;
+    if(mat.m > 30) mat.m = 30;
+
+    cout<<"Introduceti numarul de bombe: ";
+    cin>>bombsInput;
+
+    if(cin.get() !='\n')
+    {
+        custom_game();
+        exit(0);
+    }
+
+    for(i = 0; i < strlen(bombsInput); i++)
+        if(bombsInput[i] < '0' || bombsInput[i] > '9')
+        {
+            custom_game();
+            exit(0);
+        }
+
+    bombs = atoi(bombsInput);
+
+    if(bombs < 10) bombs = 10;
+    if(bombs > (mat.n - 1) * (mat.m-1))
+        bombs = (mat.n - 1) * (mat.m - 1);
+    run_game();
+}
 
 void in_game_menu()
 {
     system("cls");
-    int k, option;
+    int k, option, i;
+    char optionInput[10];
+
+    for(i = 0; i < 10; i++)
+        optionInput[i] = NULL;
+
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     cout<<"\n\tMINESWEEPER \n";
 
-    k = 2;
-    SetConsoleTextAttribute(hConsole, k);
+    SetConsoleTextAttribute(hConsole, 2);
     cout<<"\n\t1. USOR \n";
 
-    k = 14;
-    SetConsoleTextAttribute(hConsole, k);
+    SetConsoleTextAttribute(hConsole, 14);
     cout<<"\n\t2. MEDIU \n";
 
-    k = 12;
-    SetConsoleTextAttribute(hConsole, k);
+    SetConsoleTextAttribute(hConsole, 12);
     cout<<"\n\t3. EXPERT \n";
 
-    k = 13;
-    SetConsoleTextAttribute(hConsole, k);
+    SetConsoleTextAttribute(hConsole, 13);
     cout<<"\n\t4. CUSTOM \n";
 
-    k = 15;
-    SetConsoleTextAttribute(hConsole, k);
+    SetConsoleTextAttribute(hConsole, 15);
     cout<<"\n\t5. EXIT \n";
 
     cout<<"\nSelecteaza optiunea: ";
-    cin>>option;
+
+    cin>>optionInput;
+
+    if(cin.get() !='\n')
+    {
+        while(cin.get()!='\n');
+        option = -1;
+    }
+
+    for(i = 0; i < strlen(optionInput); i++)
+        if(optionInput[i] < '1' || optionInput[i] > '9')
+        {
+            option = -1;
+            break;
+        }
+
+    if(option != -1)
+        option = atoi(optionInput);
 
     switch(option)
     {
@@ -253,23 +457,7 @@ void in_game_menu()
         break;
 
         case 4:
-            system("cls");
-            cout<<"Introduceti inaltimea mapei: ";
-            cin>>mat.n;
-            if(mat.n < 9) mat.n = 9;
-            if(mat.n > 24) mat.n = 24;
-
-            cout<<"Introduceti latimea mapei: ";
-            cin>>mat.m;
-            if(mat.m < 9) mat.m = 9;
-            if(mat.m > 30) mat.m = 30;
-
-            cout<<"Introduceti numarul de bombe: ";
-            cin>>bombs;
-            if(bombs < 1) bombs = 1;
-            if(bombs > (mat.n - 1) * (mat.m-1))
-                bombs = (mat.n - 1) * (mat.m - 1);
-            run_game();
+            custom_game();
             break;
 
         case 5:
