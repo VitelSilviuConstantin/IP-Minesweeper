@@ -24,7 +24,6 @@ void generate_matrix(int numberOfBombs)
         if(mat.values[x][y] != -1)
         {
             mat.values[x][y] = -1;
-            cout<<x<<" "<<y<<'\n';
             for(i = 0; i < 8; i++)
             {
                 rx = x + dx[i];
@@ -87,7 +86,7 @@ int input_move(int &blocksToWin)
     for(i = 0; i < 10; i++)
         lineInput[i] = columnInput[i] = NULL;
 
-    cout<<"Introduceti linie: ";
+    cout<<"\nIntroduceti linie: ";
     cin>>lineInput;
 
     if(cin.get() !='\n')
@@ -155,10 +154,13 @@ int input_move(int &blocksToWin)
                 {
                     printed[line][column] = 1;
                     blocksToWin--;
+                    bombFirst = true;
                     return 1;
                 }
                 else
                 {
+                    bombFirst = true;
+
                     p = u = 1;
                     C[p].row = line;
                     C[p].column = column;
@@ -238,6 +240,11 @@ void print_matrix()
                     {
                         switch((int)mat.values[i][j])
                         {
+                            case -1:
+                                if(printBombs == true)
+                                    cout<<'B'<<" ";
+                                break;
+
                             case 1:
                                 SetConsoleTextAttribute(hConsole, 9);
                                 cout<<1<<" ";
@@ -286,13 +293,25 @@ void print_matrix()
     }
 }
 
+void make_all_printed()
+{
+    int i, j;
+    for(i = 1; i <= mat.n; i++)
+        for(j = 1; j <= mat.m; j++)
+        {
+            printed[i][j] = 1;
+            if(flagged[i][j] == true)
+                flagged[i][j] = false;
+        }
+}
+
 void run_game()
 {
     int ok, result, blocksToWin;
     ok = 1;
     generate_matrix(bombs);
-    system("pause");
     blocksToWin = mat.n * mat.m - bombs;
+
     system("cls");
 
     while(ok && blocksToWin != 0)
@@ -302,14 +321,21 @@ void run_game()
         system("cls");
         if(result == -1)
         {
-            cout<<"Ai pierdut!";
+            cout<<"GAME OVER! \n";
             ok = 0;
+            printBombs = true;
+            make_all_printed();
+            print_matrix();
+            system("pause");
         }
     }
     if(blocksToWin == 0)
     {
-        cout<<"YOU ARE A WINNER\n";
+        cout<<"YOU ARE A WINNER \n";
+        printBombs = true;
+        make_all_printed();
         print_matrix();
+        system("pause");
     }
 }
 
@@ -388,9 +414,20 @@ void custom_game()
     run_game();
 }
 
+void initialize()
+{
+    int i, j;
+    mat.n = mat.m = bombs = bombFirst = printBombs = 0;
+    for(i = 1; i <= 100; i++)
+        for(j = 1; j <= 100; j++)
+            mat.values[i][j] = flagged[i][j] = printed[i][j] = 0;
+}
+
 void in_game_menu()
 {
     system("cls");
+    initialize();
+
     int k, option, i;
     char optionInput[10];
 
@@ -441,12 +478,14 @@ void in_game_menu()
             mat.n = mat.m = 9;
             bombs = 10;
             run_game();
+            in_game_menu();
         break;
 
         case 2:
             mat.n = mat.m = 16;
             bombs = 40;
             run_game();
+            in_game_menu();
         break;
 
         case 3:
@@ -454,10 +493,12 @@ void in_game_menu()
             mat.m = 16;
             bombs = 99;
             run_game();
+            in_game_menu();
         break;
 
         case 4:
             custom_game();
+            in_game_menu();
             break;
 
         case 5:
