@@ -76,6 +76,8 @@ void bomb_pressed_first(int row, int column)
     }
 }
 
+void in_game_menu();
+
 int input_move(int &blocksToWin)
 {
     Queue C[10201], v, z;
@@ -121,22 +123,31 @@ int input_move(int &blocksToWin)
         return 1;
 
     if(flagged[line][column] == 1)
-        cout<<"Stergeti flag? Y/N ";
+        cout<<"Stergeti flag? Y/N / M pentru meniu: ";
     else
-        cout<<"Puneti flag? Y/N ";
+        cout<<"Puneti flag? Y/N / M pentru meniu: ";
     cin>>flag;
 
     flag = toupper(flag);
 
-    if(flag != 'Y' && flag != 'N')
+    if(flag != 'Y' && flag != 'N' && flag != 'M')
         return 1;
+
+    if(flag == 'M')
+        in_game_menu();
 
     if(flag == 'Y' && printed[line][column] == 0)
     {
         if(flagged[line][column] == 0)
+        {
             flagged[line][column] = 1;
+            minesLeft--;
+        }
         else
+        {
             flagged[line][column] = 0;
+            minesLeft++;
+        }
         return 1;
     }
     else
@@ -311,17 +322,18 @@ void run_game()
     ok = 1;
     generate_matrix(bombs);
     blocksToWin = mat.n * mat.m - bombs;
-
+    minesLeft = bombs;
     system("cls");
 
     while(ok && blocksToWin != 0)
     {
+        cout<<"Mines left: "<<minesLeft<<"\n\n";
         print_matrix();
         result = input_move(blocksToWin);
         system("cls");
         if(result == -1)
         {
-            cout<<"GAME OVER! \n";
+            cout<<"GAME OVER! \n\n";
             ok = 0;
             printBombs = true;
             make_all_printed();
@@ -331,7 +343,7 @@ void run_game()
     }
     if(blocksToWin == 0)
     {
-        cout<<"YOU ARE A WINNER \n";
+        cout<<"YOU ARE A WINNER \n\n";
         printBombs = true;
         make_all_printed();
         print_matrix();

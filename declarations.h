@@ -18,5 +18,6 @@ int dy[] = {-1, 0, 1, 1, 1, 0, -1, -1};
 
 int bombs;
 bool bombFirst, printBombs;
+int minesLeft;
 
 
