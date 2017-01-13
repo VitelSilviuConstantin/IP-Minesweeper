@@ -76,71 +76,166 @@ void bomb_pressed_first(int row, int column)
     }
 }
 
+void cls()
+ {
+    COORD coordScreen = { 0, 0 };
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD cCharsWritten;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD dwConSize;
+
+    GetConsoleScreenBufferInfo( hConsole, &csbi );
+
+    dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+
+    FillConsoleOutputCharacter( hConsole, (TCHAR) ' ',
+       dwConSize, coordScreen, &cCharsWritten );
+
+    GetConsoleScreenBufferInfo( hConsole, &csbi );
+
+    FillConsoleOutputAttribute( hConsole, csbi.wAttributes,
+       dwConSize, coordScreen, &cCharsWritten );
+
+    SetConsoleCursorPosition( hConsole, coordScreen );
+    return;
+ }
+
+void click_in_game(position &input)
+{
+    HANDLE hIn;
+    HANDLE hOut;
+    INPUT_RECORD InRec;
+    DWORD NumRead;
+    int x, y, aux;
+
+    hIn = GetStdHandle(STD_INPUT_HANDLE);
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    while (true)
+    {
+        ReadConsoleInput(hIn,
+                         &InRec,
+                         1,
+                         &NumRead);
+
+        if (InRec.EventType == MOUSE_EVENT)
+        {
+
+            if(InRec.Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)
+            {
+                x = InRec.Event.MouseEvent.dwMousePosition.X ;
+                y = InRec.Event.MouseEvent.dwMousePosition.Y ;
+
+                if(y == mat.n + 3 && x == 0)
+                {
+                    input.row = -1;
+                    input.column = -1;
+                    break;
+                }
+
+                aux = x;
+                x = y;
+                y = aux;
+
+                if(y % 2 == 0)
+                {
+                    y /= 2;
+                    x = x - 1;
+                    y++;
+                    if(x >= 1 && x <= mat.n && y >= 1 && y <= mat.m)
+                    {
+                        input.row = x;
+                        input.column = y;
+                        input.flag = 0;
+                        break;
+                    }
+                }
+            }
+
+        else
+        {
+            if(InRec.Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED)
+            {
+                x = InRec.Event.MouseEvent.dwMousePosition.X ;
+                y = InRec.Event.MouseEvent.dwMousePosition.Y ;
+
+                aux = x;
+                x = y;
+                y = aux;
+
+                if(y % 2 == 0)
+                {
+                    y /= 2;
+                    x = x - 1;
+                    y++;
+                    if(x >= 1 && x <= mat.n && y >= 1 && y <= mat.m)
+                    {
+                        input.row = x;
+                        input.column = y;
+                        input.flag = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+}
+
+int click_in_menu()
+{
+    HANDLE hIn;
+    HANDLE hOut;
+    INPUT_RECORD InRec;
+    DWORD NumRead;
+    int x, y, i;
+    int yPositions[] = {19, 21, 23, 25, 27};
+
+
+    hIn = GetStdHandle(STD_INPUT_HANDLE);
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    while (true)
+    {
+        ReadConsoleInput(hIn,
+                         &InRec,
+                         1,
+                         &NumRead);
+
+        if (InRec.EventType == MOUSE_EVENT)
+        {
+
+            if(InRec.Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)
+            {
+                x = InRec.Event.MouseEvent.dwMousePosition.X ;
+                y = InRec.Event.MouseEvent.dwMousePosition.Y ;
+                if(x == 88)
+                    for(i = 0; i < 5; i++)
+                        if(y == yPositions[i])
+                            return y;
+            }
+        }
+    }
+}
+
 void in_game_menu();
 
-int input_move(int &blocksToWin)
+int input_move(int &blocksToWin, position input)
 {
     Queue C[10201], v, z;
     int p, u, i;
-    char flag, lineInput[10], columnInput[10];
     int line, column;
 
-    for(i = 0; i < 10; i++)
-        lineInput[i] = columnInput[i] = NULL;
+    line = input.row;
+    column = input.column;
 
-    cout<<"\nIntroduceti linie: ";
-    cin>>lineInput;
-
-    if(cin.get() !='\n')
-    {
-        while(cin.get()!='\n');
-        return 1;
-    }
-
-    for(i = 0; i < strlen(lineInput); i++)
-        if(lineInput[i] < '0' || lineInput[i] > '9')
-            return 1;
-
-    line = atoi(lineInput);
-    if(line < 1 || line > mat.n) return 1;
-
-
-    cout<<"Introduceti coloana: ";
-    cin>>columnInput;
-
-    if(cin.get() !='\n')
-    {
-        while(cin.get()!='\n');
-        return 1;
-    }
-
-    for(i = 0; i < strlen(columnInput); i++)
-        if(columnInput[i] < '0' || lineInput[i] > '9')
-            return 1;
-
-    column = atoi(columnInput);
-    if(column < 1 || column > mat.m)
-        return 1;
-
-    if(flagged[line][column] == 1)
-        cout<<"Stergeti flag? Y/N / M pentru meniu: ";
-    else
-        cout<<"Puneti flag? Y/N / M pentru meniu: ";
-    cin>>flag;
-
-    flag = toupper(flag);
-
-    if(flag != 'Y' && flag != 'N' && flag != 'M')
-        return 1;
-
-    if(flag == 'M')
+    if(line == -1)
     {
         in_game_menu();
         exit(0);
     }
 
-    if(flag == 'Y' && printed[line][column] == 0)
-    {
+    if(input.flag == 1 && printed[line][column] == 0)
         if(flagged[line][column] == 0)
         {
             flagged[line][column] = 1;
@@ -151,8 +246,6 @@ int input_move(int &blocksToWin)
             flagged[line][column] = 0;
             minesLeft++;
         }
-        return 1;
-    }
     else
         if(printed[line][column] == 0 && flagged[line][column] == 0)
             if(mat.values[line][column] == -1 && bombFirst == true)
@@ -215,34 +308,8 @@ void print_matrix()
 {
     int i, j;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    if(mat.m > 9)
-    {
-        if(mat.n > 9) cout<<"    ";
-        else cout<<"   ";
-        for(i = 1; i <= mat.m; i++)
-            if(i / 10 == 0) cout<<"  ";
-            else cout<<i / 10<<" ";
-        cout<<'\n';
-    }
-
-    if(mat.n > 9) cout<<"    ";
-        else cout<<"   ";
-    for(i = 1; i <= mat.m; i++)
-        cout<<i % 10<<" ";
-    cout<<'\n';
-
-    if(mat.n > 9) cout<<"    ";
-        else cout<<"   ";
-
-    for(i = 1; i<=mat.m; i++)
-        cout<<'-'<<" ";
-    cout<<'\n';
-
     for(i = 1; i <= mat.n; i++)
     {
-        if(mat.n > 9 && i < 10) cout<<" ";
-        cout<<i<<"| ";
         for(j = 1; j <= mat.m; j++)
             if(flagged[i][j])
                 cout<<'F'<<" ";
@@ -305,6 +372,7 @@ void print_matrix()
                     cout<<'+'<<" ";
         cout<<'\n';
     }
+    cout<<"\n\xDB Meniu";
 }
 
 void make_all_printed()
@@ -326,31 +394,42 @@ void run_game()
     generate_matrix(bombs);
     blocksToWin = mat.n * mat.m - bombs;
     minesLeft = bombs;
-    system("cls");
 
     while(ok && blocksToWin != 0)
     {
-        cout<<"Mines left: "<<minesLeft<<"\n\n";
+        cls();
+        cout<<"Bombe negasite: "<<minesLeft<<"\n\n";
         print_matrix();
-        result = input_move(blocksToWin);
-        system("cls");
+        click_in_game(input);
+        result = input_move(blocksToWin, input);
         if(result == -1)
         {
+            cls();
             cout<<"GAME OVER! \n\n";
             ok = 0;
             printBombs = true;
             make_all_printed();
             print_matrix();
-            system("pause");
+            COORD CursorPosition;
+            CursorPosition.X = 0;
+            CursorPosition.Y = mat.n + 3;
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),CursorPosition);
+            cout<<"Apasa ENTER pentru a reveni la meniu";
+            cin.get();
         }
     }
     if(blocksToWin == 0)
     {
+        cls();
         cout<<"YOU ARE A WINNER \n\n";
         printBombs = true;
         make_all_printed();
         print_matrix();
-        system("pause");
+        COORD CursorPosition;
+        CursorPosition.X = 0;
+        CursorPosition.Y = mat.n + 3;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),CursorPosition);
+        cout<<"Apasa ENTER pentru a reveni la meniu";
     }
 }
 
@@ -362,7 +441,10 @@ void custom_game()
     for(i = 0; i < 10; i++)
         heightInput[i] = lengthInput[i] = bombsInput[i] = NULL;
 
-    system("cls");
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    cls();
+
     cout<<"Introduceti inaltimea mapei: ";
     cin>>heightInput;
 
@@ -440,16 +522,13 @@ void initialize()
 
 void in_game_menu()
 {
-    system("cls");
     initialize();
+    cls();
 
     int k, option, i;
-    char optionInput[10];
-
-    for(i = 0; i < 10; i++)
-        optionInput[i] = NULL;
 
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
 
                        cout<<"                                       @@@     .@@@  #@:  @@@   :@,  @@@@@@  .@@@@` @@    @@.   @@  @@@@@@  @@@@@@  @@@@@#   @@@@@@  @@@@@@ \n";
                        cout<<"                                      `@@@;    #@@@  #@:  @@@   :@,  @@@@@@  @@@@@: @@    @@;   @@  @@@@@@  @@@@@@  @@@@@@;  @@@@@@  @@@@@@@ \n";
@@ -471,57 +550,41 @@ void in_game_menu()
                        cout<<"                                      `@@  `@@   @@  #@:  @#   .@@.  @@@@@@ :@@@@@    +@@,   @@@    @@@@@@  @@@@@@  @@       @@@@@@  @@   ,@@ \n";
 
     SetConsoleTextAttribute(hConsole, 2);
-    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t1. USOR \n";
+    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t\xDB USOR \n";
 
     SetConsoleTextAttribute(hConsole, 14);
-    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t2. MEDIU \n";
+    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t\xDB MEDIU \n";
 
     SetConsoleTextAttribute(hConsole, 12);
-    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t3. EXPERT \n";
+    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t\xDB EXPERT \n";
 
     SetConsoleTextAttribute(hConsole, 13);
-    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t4. CUSTOM \n";
+    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t\xDB CUSTOM \n";
 
     SetConsoleTextAttribute(hConsole, 15);
-    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t5. EXIT \n";
+    cout<<"\n\t\t\t\t\t\t\t\t\t\t\t\xDB EXIT \n";
 
-    cout<<"\n\t\t\t\t\t\t\t\t\t\tSelecteaza optiunea: ";
+    cout<<"\n\t\t\t\t\t\t\t\t\tClick pe dreptunghi pentru a selecta ";
 
-    cin>>optionInput;
-
-    if(cin.get() !='\n')
-    {
-        while(cin.get()!='\n');
-        option = -1;
-    }
-
-    for(i = 0; i < strlen(optionInput); i++)
-        if(optionInput[i] < '1' || optionInput[i] > '9')
-        {
-            option = -1;
-            break;
-        }
-
-    if(option != -1)
-        option = atoi(optionInput);
+    option = click_in_menu();
 
     switch(option)
     {
-        case 1:
+        case 19:
             mat.n = mat.m = 9;
             bombs = 10;
             run_game();
             in_game_menu();
         break;
 
-        case 2:
+        case 21:
             mat.n = mat.m = 16;
             bombs = 40;
             run_game();
             in_game_menu();
         break;
 
-        case 3:
+        case 23:
             mat.n = 30;
             mat.m = 16;
             bombs = 99;
@@ -529,17 +592,12 @@ void in_game_menu()
             in_game_menu();
         break;
 
-        case 4:
+        case 25:
             custom_game();
             in_game_menu();
             break;
 
-        case 5:
+        case 27:
             break;
-
-        default:
-            cout<<"Optiune incorecta! \n";
-            system("pause");
-            in_game_menu();
     }
 }

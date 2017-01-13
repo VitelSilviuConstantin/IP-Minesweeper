@@ -1,3 +1,5 @@
+#include <windows.h>
+
 struct matrix
 {
     int n;
@@ -10,6 +12,14 @@ struct Queue
    int row;
    int column;
 };
+
+struct position
+{
+    int row;
+    int column;
+    bool flag;
+}input;
+
 bool flagged[101][101];
 bool printed[101][101];
 
@@ -19,3 +29,6 @@ int dy[] = {-1, 0, 1, 1, 1, 0, -1, -1};
 int bombs;
 bool bombFirst, printBombs;
 int minesLeft;
+
+COORD MouseWhere;
+
