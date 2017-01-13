@@ -33,13 +33,12 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="declarations.h" />
-		<Unit filename="fucntions.h" />
+		<Unit filename="functions.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
 			<debugger />
-			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
